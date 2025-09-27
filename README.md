@@ -1,5 +1,5 @@
-Rufus: The Reliable USB Formatting Utility
-==========================================
+SecureWipe: The Reliable USB Formatting Utility
+===============================================
 
 [![VS2022 Build Status](https://img.shields.io/github/actions/workflow/status/pbatard/rufus/vs2022.yml?branch=master&style=flat-square&label=VS2022%20Build)](https://github.com/pbatard/rufus/actions/workflows/vs2022.yml)
 [![MinGW Build Status](https://img.shields.io/github/actions/workflow/status/pbatard/rufus/mingw.yml?branch=master&style=flat-square&label=MinGW%20Build)](https://github.com/pbatard/rufus/actions/workflows/mingw.yml)
@@ -9,9 +9,9 @@ Rufus: The Reliable USB Formatting Utility
 [![Download Stats](https://img.shields.io/github/downloads/pbatard/rufus/total.svg?label=Downloads&style=flat-square)](https://github.com/pbatard/rufus/releases)
 [![Contributors](https://img.shields.io/github/contributors/pbatard/rufus.svg?style=flat-square&label=Contributors)](https://github.com/pbatard/rufus/graphs/contributors)
 
-![Rufus logo](https://raw.githubusercontent.com/pbatard/rufus/master/res/icons/rufus-128.png)
+![SecureWipe logo](https://raw.githubusercontent.com/pbatard/rufus/master/res/icons/rufus-128.png)
 
-Rufus is a utility that helps format and create bootable USB flash drives.
+SecureWipe is a utility that helps format and create bootable USB flash drives.
 
 Features
 --------
@@ -43,15 +43,15 @@ Use either Visual Studio 2022 or MinGW and then invoke the `.sln` or `configure`
 
 #### Visual Studio
 
-Rufus is an OSI compliant Open Source project. You are entitled to
+SecureWipe is an OSI compliant Open Source project. You are entitled to
 download and use the *freely available* [Visual Studio Community Edition](https://www.visualstudio.com/vs/community/)
-to build, run or develop for Rufus. As per the Visual Studio Community Edition license,
+to build, run or develop for SecureWipe. As per the Visual Studio Community Edition license,
 this applies regardless of whether you are an individual or a corporate user.
 
 Additional information
 ----------------------
 
-Rufus provides extensive information about what it is doing, either through its
+SecureWipe provides extensive information about what it is doing, either through its
 easily accessible log, or through the [Windows debug facility](https://docs.microsoft.com/en-us/sysinternals/downloads/debugview).
 
 * [__Official Website__](https://rufus.ie)
