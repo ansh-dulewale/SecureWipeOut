@@ -1,5 +1,25 @@
 SecureWipe: The Reliable USB Formatting Utility
 ===============================================
+[//]: # (Requirements section)
+
+Requirements
+------------
+
+To build and run SecureWipe, you need:
+
+- **Windows 10/11 (x64)**
+- **Visual Studio 2022** (Community Edition is sufficient)
+	- Includes MSVC compiler and Windows SDK
+- **Git** (for version control)
+- **PowerShell** (for running scripts)
+- **Optional:** MinGW (for alternative build method)
+- **Optional:** ImageMagick (for advanced icon conversion)
+
+For icon updates:
+- PNG image for your custom icon
+- Online PNG to ICO converter (e.g. https://convertio.co/png-ico/)
+
+No installation is required to run SecureWipe; just build and launch the executable.
 
 [![VS2022 Build Status](https://img.shields.io/github/actions/workflow/status/pbatard/rufus/vs2022.yml?branch=master&style=flat-square&label=VS2022%20Build)](https://github.com/pbatard/rufus/actions/workflows/vs2022.yml)
 [![MinGW Build Status](https://img.shields.io/github/actions/workflow/status/pbatard/rufus/mingw.yml?branch=master&style=flat-square&label=MinGW%20Build)](https://github.com/pbatard/rufus/actions/workflows/mingw.yml)
@@ -37,8 +57,52 @@ Features
 * 100% [Free Software](https://www.gnu.org/philosophy/free-sw) ([GPL v3](https://www.gnu.org/licenses/gpl-3.0))
 
 Compilation
------------
 
+How to Run SecureWipe
+---------------------
+
+After building the project, you can run SecureWipe as follows:
+
+### 1. Run the Application
+
+- Navigate to the build output directory:
+	```
+	cd x64\Release
+	```
+- Run the executable:
+	```
+	.\securewipe.exe
+	```
+	This will launch the SecureWipe GUI application.
+
+### 2. Update the Application Icon
+
+If you want to update the application icon to your custom brush/cleaning icon:
+
+1. Save your icon image as `new_icon.png` in the project root.
+2. Convert it to ICO format using an online tool (e.g. https://convertio.co/png-ico/) and save as `new_icon.ico`.
+3. Run the provided script:
+	 ```
+	 .\update_icon_simple.cmd
+	 ```
+	 This will replace the icon files in `res/` and `res/icons/`.
+
+4. Rebuild the project to apply the new icon:
+	 ```
+	 $env:PATH += ";C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin"
+	 msbuild rufus.sln /p:Configuration=Release /p:Platform=x64
+	 ```
+
+### 3. Push Changes to GitHub
+
+To push your changes:
+```
+git add .
+git commit -m "Update application icon and add run instructions"
+git push origin master
+```
+
+---
 Use either Visual Studio 2022 or MinGW and then invoke the `.sln` or `configure`/`make` respectively.
 
 #### Visual Studio
