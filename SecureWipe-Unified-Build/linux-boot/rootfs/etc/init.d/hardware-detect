@@ -1,0 +1,60 @@
+#!/sbin/openrc-run
+# Hardware Detection Service for SecureWipe
+# Detects and initializes storage devices
+
+name="hardware-detect"
+description="SecureWipe Hardware Detection Service"
+
+depend() {
+    need localmount
+    before securewipe
+}
+
+start() {
+    ebegin "Detecting storage hardware"
+    
+    # Load essential storage drivers
+    modprobe sd_mod 2>/dev/null || true
+    modprobe usb_storage 2>/dev/null || true
+    modprobe ahci 2>/dev/null || true
+    modprobe nvme 2>/dev/null || true
+    modprobe mmc_core 2>/dev/null || true
+    modprobe sdhci 2>/dev/null || true
+    
+    # Wait for device settlement
+    sleep 2
+    
+    # Trigger udev to populate /dev
+    udevadm trigger --subsystem-match=block
+    udevadm settle --timeout=10
+    
+    # Create device detection log
+    mkdir -p /var/log/securewipe
+    
+    # Log detected storage devices
+    {
+        echo "=== SecureWipe Hardware Detection Log ==="
+        echo "Detection time: $(date)"
+        echo ""
+        echo "Block devices:"
+        lsblk -o NAME,SIZE,TYPE,VENDOR,MODEL,SERIAL 2>/dev/null || echo "lsblk not available"
+        echo ""
+        echo "Storage devices in /dev:"
+        ls -la /dev/sd* /dev/nvme* /dev/mmc* 2>/dev/null || echo "No storage devices found"
+        echo ""
+        echo "PCI storage controllers:"
+        lspci | grep -i storage 2>/dev/null || echo "lspci not available"
+        echo ""
+        echo "USB storage devices:"
+        lsusb | grep -i "mass storage\|storage" 2>/dev/null || echo "No USB storage devices"
+        echo ""
+    } > /var/log/securewipe/hardware-detection.log
+    
+    eend $?
+}
+
+stop() {
+    ebegin "Stopping hardware detection"
+    # Nothing to stop - detection is one-time
+    eend 0
+}

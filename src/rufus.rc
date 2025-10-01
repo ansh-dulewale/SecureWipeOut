@@ -30,28 +30,44 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 // Dialog
 //
 
-IDD_DIALOG DIALOGEX 12, 12, 260, 180
+IDD_DIALOG DIALOGEX 12, 12, 380, 320
 STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_ACCEPTFILES
-CAPTION "SecureWipe"
+CAPTION "SecureWipe - Secure USB Formatting Tool"
 FONT 9, "Segoe UI", 400, 0, 0x0
 BEGIN
-    LTEXT           "USB Drive:",IDS_DEVICE_TXT,10,15,50,12
-    COMBOBOX        IDC_DEVICE,65,13,140,15,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Refresh",IDC_SAVE,210,13,40,15
+    // Drive Selection Group
+    GROUPBOX        "Drive Selection",IDC_STATIC,15,15,350,55
+    LTEXT           "USB Drive:",IDS_DEVICE_TXT,25,35,60,12
+    COMBOBOX        IDC_DEVICE,90,33,220,15,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Refresh",IDC_SAVE,320,33,40,15
+    LTEXT           "Status: No drive selected",IDC_DRIVE_STATUS,25,52,200,10
     
-    LTEXT           "Image:",IDS_BOOT_SELECTION_TXT,10,35,50,12
-    COMBOBOX        IDC_BOOT_SELECTION,65,33,140,15,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
-    CONTROL         "Browse",IDC_SELECT,"Button", WS_TABSTOP,210,33,40,15
+    // Image Selection Group  
+    GROUPBOX        "Image Selection",IDC_STATIC,15,85,350,45
+    LTEXT           "Image:",IDS_BOOT_SELECTION_TXT,25,105,60,12
+    COMBOBOX        IDC_BOOT_SELECTION,90,103,220,15,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Browse",IDC_SELECT,320,103,40,15
     
-    CONTROL         "Quick Format",IDC_QUICK_FORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,55,70,12
-    CONTROL         "Check device",IDC_BAD_BLOCKS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,90,55,70,12
+    // Format Options Group
+    GROUPBOX        "Format Options",IDC_STATIC,15,145,350,40
+    CONTROL         "Quick format",IDC_QUICK_FORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,25,165,100,12
+    CONTROL         "Check device for bad blocks",IDC_BAD_BLOCKS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,165,150,12
     
-    LTEXT           "Ready",IDS_STATUS_TXT,10,75,100,12,NOT WS_GROUP
-    CONTROL         "",IDC_PROGRESS,"msctls_progress32",PBS_SMOOTH | WS_BORDER,10,90,240,8
+    // Advanced Options Toggle (hidden for MVP)
+    CONTROL         "▼ Show advanced drive properties",IDC_ADVANCED_DRIVE_PROPERTIES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP | NOT WS_VISIBLE,25,190,250,12
     
-    DEFPUSHBUTTON   "Create",IDC_START,90,105,60,20
-    PUSHBUTTON      "Close",IDCANCEL,160,105,60,20
+    // Status and Progress Section
+    GROUPBOX        "Status & Progress",IDC_STATIC,15,185,350,65
+    LTEXT           "Ready - Select USB drive and options above",IDC_OPERATION_STATUS,25,205,320,12,NOT WS_GROUP
+    CONTROL         "",IDC_PROGRESS,"msctls_progress32",PBS_SMOOTH | WS_BORDER,25,220,320,14
+    LTEXT           "0% Complete",IDC_PROGRESS_PERCENT,25,238,100,10
+    LTEXT           "Time remaining: --:--",IDC_TIME_REMAINING,200,238,120,10
+    
+    // Action Buttons
+    DEFPUSHBUTTON   "CREATE SECURE USB",IDC_START,120,270,100,25
+    PUSHBUTTON      "CLOSE",IDCANCEL,230,270,80,25
     
     // Hide all advanced options for MVP
     LTEXT           "Image option",IDS_IMAGE_OPTION_TXT,8,65,216,8,NOT WS_VISIBLE
@@ -64,8 +80,7 @@ BEGIN
     LTEXT           "Target system",IDS_TARGET_SYSTEM_TXT,128,87,96,8,NOT WS_VISIBLE
     COMBOBOX        IDC_TARGET_SYSTEM,128,96,96,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | NOT WS_VISIBLE
     LTEXT           "?",IDS_CSM_HELP_TXT,226,97,8,15,SS_NOTIFY | NOT WS_VISIBLE
-    CONTROL         "Show advanced drive properties",IDC_ADVANCED_DRIVE_PROPERTIES,
-                    "Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,8,109,216,10
+
     CONTROL         "List USB Hard Drives",IDC_LIST_USB_HDD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP | NOT WS_VISIBLE,8,119,216,10
     CONTROL         "Add fixes for old BIOSes (extra partition, align, etc.)",IDC_OLD_BIOS_FIXES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP | NOT WS_VISIBLE,8,129,216,10

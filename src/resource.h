@@ -192,6 +192,10 @@
 #define IDC_LIST_ITEM14                 1111
 #define IDC_LIST_ITEM15                 1112
 #define IDC_LIST_ITEMMAX                1113
+#define IDC_PROGRESS_PERCENT            1114
+#define IDC_TIME_REMAINING              1115
+#define IDC_OPERATION_STATUS            1116
+#define IDC_DRIVE_STATUS                1117
 #define IDS_DEVICE_TXT                  2000
 #define IDS_PARTITION_TYPE_TXT          2001
 #define IDS_FILE_SYSTEM_TXT             2002

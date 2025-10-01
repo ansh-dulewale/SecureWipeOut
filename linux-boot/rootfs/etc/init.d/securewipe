@@ -1,0 +1,45 @@
+#!/sbin/openrc-run
+# SecureWipe Auto-Launch Service
+# Automatically starts the SecureWipe application after system boot
+
+name="securewipe"
+description="SecureWipe Data Sanitization Service"
+
+depend() {
+    need localmount
+    after bootmisc
+    use logger
+}
+
+start() {
+    ebegin "Starting SecureWipe application"
+    
+    # Clear screen and show boot message
+    clear
+    echo "========================================"
+    echo "    SecureWipe Data Sanitization"
+    echo "========================================"
+    echo ""
+    echo "Initializing secure wiping environment..."
+    echo "Please wait while hardware is detected..."
+    echo ""
+    
+    # Wait for hardware detection to complete
+    sleep 3
+    
+    # Launch the SecureWipe application
+    start-stop-daemon --start \
+        --exec /usr/bin/securewipe-launcher \
+        --background \
+        --make-pidfile \
+        --pidfile /var/run/securewipe.pid
+    
+    eend $?
+}
+
+stop() {
+    ebegin "Stopping SecureWipe application"
+    start-stop-daemon --stop \
+        --pidfile /var/run/securewipe.pid
+    eend $?
+}

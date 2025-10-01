@@ -1,0 +1,40 @@
+SecureWipe v4.10 - Release Notes
+===============================
+
+BUILD INFORMATION:
+- Version: 4.10.2278
+- Build Date: September 25, 2025
+- Architecture: x64 (64-bit)
+- Compressed Size: ~2.4 MB
+- Executable Size: ~5.2 MB
+
+CHANGES FROM ORIGINAL RUFUS:
+- Rebranded to "SecureWipe"
+- Streamlined, modern interface design
+- Reduced dialog size (260×180 vs 300×220)
+- Modern Segoe UI font
+- Removed bulky group boxes
+- Cleaner, more professional appearance
+- Same powerful functionality as Rufus
+
+KEY FEATURES:
+- Create bootable USB drives from ISO files
+- Support for UEFI and Legacy BIOS
+- Multiple file system options
+- Bad block checking
+- Quick format option
+- Portable - no installation required
+
+TESTING FOCUS AREAS:
+1. User Interface - Does it look clean and professional?
+2. USB Detection - Are your USB drives properly detected?
+3. ISO Selection - Can you browse and select ISO files?
+4. Formatting Process - Does the creation process work smoothly?
+5. Error Handling - Are any errors clearly displayed?
+
+KNOWN LIMITATIONS:
+- Requires Administrator privileges
+- Windows 10/11 x64 only
+- This is a prototype build for testing
+
+Please provide feedback on usability, appearance, and any issues encountered!

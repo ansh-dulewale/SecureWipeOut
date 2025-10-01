@@ -900,8 +900,147 @@ void EnableControls(BOOL enable, BOOL remove_checkboxes)
 	EnableWindow(hClusterSize, enable);
 }
 
+// Enhanced validation for SecureWipe operations
+static BOOL ValidateSecureWipeOperation(char* error_msg, size_t error_msg_size)
+{
+	int device_index = ComboBox_GetCurSel(hDeviceList);
+	
+	// Check if a USB drive is selected
+	if (device_index < 0) {
+		safe_sprintf(error_msg, error_msg_size, 
+			"No USB drive selected.\n\n"
+			"Please connect a USB drive and click the Refresh button to detect it.");
+		return FALSE;
+	}
+
+	// Check if the selected drive is suitable for secure wiping
+	if (SelectedDrive.DiskSize == 0) {
+		safe_sprintf(error_msg, error_msg_size,
+			"Unable to determine drive size.\n\n"
+			"The selected drive may be corrupted or not accessible. "
+			"Please try a different USB drive.");
+		return FALSE;
+	}
+
+	// Check for minimum drive size (128 MB to accommodate bootloader)
+	if (SelectedDrive.DiskSize < 128 * MB) {
+		safe_sprintf(error_msg, error_msg_size,
+			"Drive too small for secure wipe operation.\n\n"
+			"SecureWipe requires at least 128 MB of space to create the bootable environment. "
+			"Current drive size: %s",
+			SizeToHumanReadable(SelectedDrive.DiskSize, FALSE, FALSE));
+		return FALSE;
+	}
+
+	// Warning for drives that are too large (>1TB - might take very long)
+	if (SelectedDrive.DiskSize > 1 * TB) {
+		safe_sprintf(error_msg, error_msg_size,
+			"Large drive detected (%s).\n\n"
+			"Creating a secure wipe USB for very large drives may take considerable time. "
+			"Do you want to continue?",
+			SizeToHumanReadable(SelectedDrive.DiskSize, FALSE, FALSE));
+		// This is a warning, but we'll return TRUE to allow continuation
+		// The caller should show this as a warning dialog with YES/NO
+		return TRUE;
+	}
+
+	// Check if drive is mounted/in use
+	if (SelectedDrive.MediaType == 0) {
+		safe_sprintf(error_msg, error_msg_size,
+			"Drive access issue detected.\n\n"
+			"The selected drive may be in use by another application. "
+			"Please close any applications using this drive and try again.");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+// Build SecureWipe Linux bootable environment
+static BOOL BuildSecureWipeLinux(void)
+{
+	STARTUPINFOA si;
+	PROCESS_INFORMATION pi;
+	DWORD exit_code;
+	char cmd_line[MAX_PATH];
+	char app_path[MAX_PATH];
+	
+	// Update status
+	SetWindowTextU(GetDlgItem(hMainDialog, IDC_OPERATION_STATUS), 
+		"Building SecureWipe Linux environment...");
+	
+	// Get application directory
+	GetModuleFileNameA(NULL, app_path, sizeof(app_path));
+	char* last_slash = strrchr(app_path, '\\');
+	if (last_slash) *last_slash = '\0';
+	
+	// Construct command to run Linux build script
+	safe_sprintf(cmd_line, sizeof(cmd_line), 
+		"cmd.exe /c \"%s\\linux-boot\\scripts\\build-windows.cmd\"", app_path);
+	
+	uprintf("Executing Linux build command: %s", cmd_line);
+	
+	// Initialize process startup info
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_HIDE; // Hide the command window
+	ZeroMemory(&pi, sizeof(pi));
+	
+	// Create process to build Linux environment
+	if (!CreateProcessA(NULL, cmd_line, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+		uprintf("Failed to start Linux build process: %s", WindowsErrorString());
+		SetWindowTextU(GetDlgItem(hMainDialog, IDC_OPERATION_STATUS), 
+			"Error: Failed to start Linux build process");
+		return FALSE;
+	}
+	
+	// Update status to show build in progress
+	SetWindowTextU(GetDlgItem(hMainDialog, IDC_OPERATION_STATUS), 
+		"Linux environment building... This may take several minutes.");
+	
+	// Wait for process to complete (with timeout)
+	DWORD wait_result = WaitForSingleObject(pi.hProcess, 300000); // 5 minute timeout
+	
+	if (wait_result == WAIT_TIMEOUT) {
+		uprintf("Linux build process timed out");
+		TerminateProcess(pi.hProcess, 1);
+		SetWindowTextU(GetDlgItem(hMainDialog, IDC_OPERATION_STATUS), 
+			"Error: Linux build process timed out");
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+		return FALSE;
+	}
+	
+	// Get exit code
+	if (!GetExitCodeProcess(pi.hProcess, &exit_code)) {
+		uprintf("Failed to get Linux build process exit code");
+		SetWindowTextU(GetDlgItem(hMainDialog, IDC_OPERATION_STATUS), 
+			"Error: Could not determine build status");
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+		return FALSE;
+	}
+	
+	// Clean up process handles
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+	
+	if (exit_code == 0) {
+		uprintf("Linux build completed successfully");
+		SetWindowTextU(GetDlgItem(hMainDialog, IDC_OPERATION_STATUS), 
+			"✅ Linux environment built successfully - Ready to create USB");
+		return TRUE;
+	} else {
+		uprintf("Linux build failed with exit code: %d", exit_code);
+		SetWindowTextU(GetDlgItem(hMainDialog, IDC_OPERATION_STATUS), 
+			"❌ Linux build failed - Check build environment");
+		return FALSE;
+	}
+}
+
 // Populate the UI main dropdown properties.
-// This should be called on device or boot type change.
+// This should be called on device or boot type change.  
 static BOOL PopulateProperties(void)
 {
 	char* device_tooltip;
@@ -911,8 +1050,11 @@ static BOOL PopulateProperties(void)
 	memset(&SelectedDrive, 0, sizeof(SelectedDrive));
 	EnableWindow(hStart, FALSE);
 
-	if (device_index < 0)
+	if (device_index < 0) {
+		// Update drive status when no device is selected
+		SetWindowTextU(GetDlgItem(hMainDialog, IDC_DRIVE_STATUS), "Status: No drive selected");
 		goto out;
+	}
 
 	persistence_unit_selection = -1;
 	// Get data from the currently selected drive
@@ -945,6 +1087,12 @@ static BOOL PopulateProperties(void)
 		CreateTooltip(hDeviceList, device_tooltip, -1);
 		free(device_tooltip);
 	}
+
+	// Update drive status with device information
+	char status_text[256];
+	safe_sprintf(status_text, sizeof(status_text), "Status: %s (%s) - Ready for secure wipe", 
+		rufus_drive[device_index].name, SizeToHumanReadable(SelectedDrive.DiskSize, FALSE, FALSE));
+	SetWindowTextU(GetDlgItem(hMainDialog, IDC_DRIVE_STATUS), status_text);
 
 out:
 	SetProposedLabel(device_index);
@@ -2623,6 +2771,27 @@ static INT_PTR CALLBACK MainCallback(HWND hDlg, UINT message, WPARAM wParam, LPA
 		case IDC_START:
 			if (format_thread != NULL)
 				return (INT_PTR)TRUE;
+			
+			// Validate SecureWipe operation before proceeding
+			char validation_error[512];
+			if (!ValidateSecureWipeOperation(validation_error, sizeof(validation_error))) {
+				// Show user-friendly error message
+				MessageBoxExU(hMainDialog, validation_error, "SecureWipe Validation Error", 
+					MB_ICONWARNING | MB_OK, selected_langid);
+				return (INT_PTR)TRUE;
+			}
+			
+			// Update status to show operation starting
+			SetWindowTextU(GetDlgItem(hMainDialog, IDC_OPERATION_STATUS), 
+				"Preparing secure USB creation...");
+			
+			// Build SecureWipe Linux environment first
+			if (!BuildSecureWipeLinux()) {
+				// Build failed, re-enable controls and return
+				EnableControls(TRUE, FALSE);
+				return (INT_PTR)TRUE;
+			}
+			
 			// Just in case
 			boot_type = (int)ComboBox_GetCurItemData(hBootType);
 			partition_type = (int)ComboBox_GetCurItemData(hPartitionScheme);
@@ -2644,6 +2813,8 @@ static INT_PTR CALLBACK MainCallback(HWND hDlg, UINT message, WPARAM wParam, LPA
 			if (CreateThread(NULL, 0, BootCheckThread, NULL, 0, NULL) == NULL) {
 				uprintf("Unable to start boot check thread");
 				ErrorStatus = RUFUS_ERROR(APPERR(ERROR_CANT_START_THREAD));
+				SetWindowTextU(GetDlgItem(hMainDialog, IDC_OPERATION_STATUS), 
+					"Error: Unable to start operation");
 				PostMessage(hMainDialog, UM_FORMAT_COMPLETED, (WPARAM)FALSE, 0);
 			}
 			break;
@@ -2680,7 +2851,18 @@ static INT_PTR CALLBACK MainCallback(HWND hDlg, UINT message, WPARAM wParam, LPA
 			}
 			break;
 		case IDC_SAVE:
-			save_image = SaveImage();
+			// Handle Refresh button click - refresh USB device list
+			SetWindowTextU(GetDlgItem(hMainDialog, IDC_DRIVE_STATUS), "Status: Refreshing device list...");
+			GetDevices((DWORD)ComboBox_GetCurItemData(hDeviceList));
+			EnableControls(TRUE, FALSE);
+			if (ComboBox_GetCurSel(hDeviceList) < 0) {
+				SetWindowTextU(GetDlgItem(hMainDialog, IDC_DRIVE_STATUS), "Status: No USB drives detected");
+				SetWindowTextU(GetDlgItem(hMainDialog, IDC_OPERATION_STATUS), 
+					"No USB drives found - Please connect a USB drive and click Refresh");
+			} else {
+				// Device selection will trigger PopulateProperties which updates the status
+				SendMessage(hMainDialog, WM_COMMAND, (CBN_SELCHANGE << 16) | IDC_DEVICE, 0);
+			}
 			break;
 		case IDM_SELECT:
 		case IDM_DOWNLOAD:
